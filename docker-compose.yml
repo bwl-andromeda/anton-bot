@@ -1,0 +1,32 @@
+services:
+  bot:
+    build: .
+    container_name: telegram_bot
+    environment:
+      - TOKEN=${TOKEN}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB=${DB}
+      - DB_HOST=${DB_HOST}
+
+    depends_on:
+      - database
+    networks:
+      - bot-network
+
+  database:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - bot-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+networks:
+  bot-network:
+
+volumes:
+  postgres_data:
