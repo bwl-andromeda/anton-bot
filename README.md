@@ -26,4 +26,4 @@ docker compose up --build
 
 И наслаждаемся проектом.
 
-### Обратный feedback по проекту [Арсений](https://t.me/argus11)
+### Обратный feedback по проекту [Антон](https://t.me/platonn02)
