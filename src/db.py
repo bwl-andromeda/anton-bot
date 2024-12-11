@@ -70,16 +70,6 @@ async def init_database():
         """)
         print("Таблица transactions создана.")
 
-        # Добавляем начальные данные (опционально)
-        await conn.execute("""
-            INSERT INTO flowers (name, price) VALUES
-            ('Роза', 100),
-            ('Тюльпан', 50),
-            ('Лилия', 75)
-            ON CONFLICT DO NOTHING;
-        """)
-        print("Начальные данные в таблице flowers добавлены.")
-
     except Exception as e:
         print(f"Ошибка при инициализации базы данных: {e}")
     finally:

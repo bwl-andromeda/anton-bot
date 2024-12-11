@@ -85,7 +85,6 @@ async def profile_panel(message: Message, pool):
                 await message.answer("Пользователь не найден в базе данных.", reply_markup=await start_keyboard())
             else:
                 profile_text = "Ваш профиль:\n\n"
-                profile_text += f"Telegram ID: {user['user_id']}\n"
                 profile_text += f"Имя пользователя: {user['user_name']}\n"
                 profile_text += f"Баланс: {user['balance']} рублей\n"
                 await message.answer(profile_text, reply_markup=await start_keyboard())
@@ -189,6 +188,8 @@ async def select_quantity_handler(message: Message, state: FSMContext, pool):
                 'pending'  # Статус "ожидает подтверждения"
             )
 
+            order_id = await conn.fetchval("SELECT id FROM orders WHERE user_id = $1 ORDER BY id DESC LIMIT 1", user_id)
+
             # Обновляем баланс пользователя
             await conn.execute(
                 "UPDATE users SET balance = balance - $1 WHERE user_id = $2",
@@ -207,14 +208,13 @@ async def select_quantity_handler(message: Message, state: FSMContext, pool):
             await message.answer(f"Ваш заказ на {quantity} цветков успешно создан!\n"
                                  f"С вами свяжется администратор для подтверждения заказа.")
 
+            # Уведомляем администратора
+            flower = await conn.fetchrow("SELECT * FROM flowers WHERE id = $1", flower_id)
             keyboard = InlineKeyboardMarkup(
                 inline_keyboard=[
                     [InlineKeyboardButton(text="Готово", callback_data=f"complete_order_{order_id}")]
                 ]
             )
-
-            # Уведомляем администратора
-            flower = await conn.fetchrow("SELECT * FROM flowers WHERE id = $1", flower_id)
             await bot.send_message(
                 chat_id=ADMIN_ID,
                 text=f"Поступил новый заказ:\n"
@@ -243,11 +243,14 @@ async def complete_order_callback(callback: CallbackQuery, pool):
             await conn.execute("UPDATE orders SET status = 'completed' WHERE id = $1", order_id)
 
             # Уведомляем администратора
-            await callback.message.edit_text("Заказ успешно завершен!", reply_markup=await start_keyboard())
+            await callback.message.edit_text(
+                "Заказ успешно завершен!",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[])
+            )
 
         except Exception as e:
             print(f"Ошибка при завершении заказа: {e}")
-            await callback.message.answer("Произошла ошибка. Попробуйте позже.", reply_markup=await start_keyboard())
+            await callback.message.answer("Произошла ошибка. Попробуйте позже.")
 
 
 @router.message(F.text == "Мои заказы")
